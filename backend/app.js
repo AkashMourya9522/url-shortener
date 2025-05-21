@@ -1,12 +1,16 @@
 import express from 'express';
 const app = express();
 import { nanoid } from 'nanoid';
+import cors from 'cors'
 import connectDB from './src/config/mongoose.config.js';
 import dotenv from 'dotenv';
 dotenv.config();
 import urlSchema from './src/models/shorturl.model.js';
+import shortUrlRoute from './src/routes/shorturl.route.js';
+import { redirectUrl } from './src/controllers/shortUrl.controller.js';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors())
 
 
 app.listen(3000, () => {
@@ -14,25 +18,5 @@ app.listen(3000, () => {
     console.log("Server is running on http://localhost:3000");
 });
 
-app.post("/api/create", async (req, res) => {
-    const {url} = req.body;
-    const short_url = nanoid(7);
-    const newUrl = new urlSchema({
-        short_url,
-        long_url: url,
-    });
-    await newUrl.save();
-    res.status(201).json({ short_url });
-});
-
-app.get("/:id",async (req,res)=>{
-    const {id} = req.params
-    try {
-        const dbRes = await urlSchema.findOne({short_url:id})
-        res.redirect(dbRes.long_url)
-    } catch (error) {
-        res.status(404).json({
-            "msg":"Some Error has occurred!!"
-        })
-    }
-})
+app.use("/api/create", shortUrlRoute);
+app.use("/api/redirect",shortUrlRoute)
